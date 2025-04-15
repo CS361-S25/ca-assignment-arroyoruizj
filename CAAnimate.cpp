@@ -51,7 +51,9 @@ class CAAnimator : public emp::web::Animate {
 
         // Draw the initial grid on the canvas with white cells and black borders
         for (int x = 0; x < num_w_boxes; x++) {
+
             for (int y = 0; y < num_h_boxes; y++) {
+                
                 canvas.Rect(x * cellSize, y * cellSize, cellSize, cellSize, "white", "black");
             }
         }
@@ -115,20 +117,20 @@ class CAAnimator : public emp::web::Animate {
             // Iterate through the 3x3 neighborhood around the cell
             for (int i = x - 1; i <= x + 1; i++) {
 
-            for (int j = y - 1; j <= y + 1; j++) {
+                for (int j = y - 1; j <= y + 1; j++) {
 
-                // Skip the cell itself
-                if (i == x && j == y) {
-                continue;
+                    // Skip the cell itself
+                    if (i == x && j == y) {
+                    continue;
+                    }
+            
+                    // Wrap around the grid boundaries
+                    int wrapped_i = emp::Mod(i, num_w_boxes);
+                    int wrapped_j = emp::Mod(j, num_h_boxes);
+
+                    // Add the state of the neighbor to the total
+                    neighborAvg += cells[wrapped_i][wrapped_j];
                 }
-        
-                // Wrap around the grid boundaries
-                int wrapped_i = emp::Mod(i, num_w_boxes);
-                int wrapped_j = emp::Mod(j, num_h_boxes);
-
-                // Add the state of the neighbor to the total
-                neighborAvg += cells[wrapped_i][wrapped_j];
-            }
             }
         
             // Return the average state of the 8 neighbors
