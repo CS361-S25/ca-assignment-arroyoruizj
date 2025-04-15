@@ -97,49 +97,6 @@ class CAAnimator : public emp::web::Animate {
         }
 
         /**
-         * @brief Counts the number of live neighbors around a given cell.
-         * 
-         * This function calculates the number of live neighbors for a cell
-         * located at (x, y) in the grid. It uses modular arithmetic to handle
-         * wrapping around the grid boundaries.
-         * 
-         * @param x The x-coordinate of the cell.
-         * @param y The y-coordinate of the cell.
-         * @return The count of live neighbors.
-         */
-        float NeighborCount(int x, int y) {
-
-            int neighborCount = 0;
-        
-            // Iterate through the 3x3 neighborhood around the cell
-            for (int i = x - 1; i <= x + 1; i++) {
-
-                for (int j = y - 1; j <= y + 1; j++) {
-
-                    // Skip the cell itself
-                    if (i == x && j == y) {
-
-                    continue;
-                    
-                    }
-            
-                    // Wrap around the grid boundaries
-                    int wrapped_i = emp::Mod(i, num_w_boxes);
-                    int wrapped_j = emp::Mod(j, num_h_boxes);
-
-                    // Increment the count if the neighbor is alive
-                    if (cells[wrapped_i][wrapped_j] == 1) {
-
-                        neighborCount++;
-
-                    }
-                }
-            }
-        
-            return neighborCount;
-        }
-
-        /**
          * @brief Calculates the average state of the near neighbors of a cell.
          * 
          * This function computes the average value of the states of the 8
