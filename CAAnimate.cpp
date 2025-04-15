@@ -5,8 +5,10 @@
 // This code is a simple implementation of an Conway's game of life
 // using a population of continuous automata.
 
-// Several parts of the code was created following Anya E. Vostinar's 
-// Neighbor Finder and Gradients Lab.
+// This project was inspired by Anya E. Vostinar's Neighbor Finder 
+// and Gradients Lab. It builds upon a foundational understanding of 
+// these labs and was developed as part of Anya's Digital Evolution and 
+// Artificial Life Cellular Automaton Homework Assignment in Spring 2025.
 
 
 // Setting up Environment
