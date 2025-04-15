@@ -214,71 +214,130 @@ class CAAnimator : public emp::web::Animate {
             return neighborAvg / 48;
         }
 
+        /**
+         * @brief Draws the current state of the cells on the canvas.
+         * 
+         * This function iterates through the grid of cells and draws each cell
+         * on the canvas. The color of each cell is determined by its state, with
+         * a gradient hue based on the cell's value.
+         */
+        void DrawCells() {
 
-        void DoFrame() {
-
-            canvas.Clear();
-
+            // Iterate through each cell in the grid
             for (int i = 0; i < num_w_boxes; i++) {
 
                 for (int j = 0; j < num_h_boxes; j++) {
 
-                    canvas.Rect(i * cellSize, j * cellSize, cellSize, cellSize, emp::ColorHSV(340.0 * cells[i][j], 1 * cells[i][j], 1 * cells[i][j]), "black");
+                    // Draw a rectangle for each cell with a color based on its state
+                    canvas.Rect(
+                    i * cellSize, // X-coordinate of the cell
+                    j * cellSize, // Y-coordinate of the cell
+                    cellSize,     // Width of the cell
+                    cellSize,     // Height of the cell
+                    emp::ColorHSV(340.0 * cells[i][j], 1 * cells[i][j], 1 * cells[i][j]), // Fill color
+                    "black"       // Border color
+                    );
 
                 }
             }
+        }
 
+        /**
+         * @brief Computes the next generation of the cellular automaton.
+         * 
+         * This function calculates the state of each cell in the grid for the next
+         * generation based on the average states of its neighbors and specific rules
+         * for live and dead cells.
+         * 
+         * @return A 2D vector representing the updated state of the grid.
+         */
+        std::vector<std::vector<float>> NextGeneration() {
+
+            // Create a new grid to store the next generation of cells
             std::vector<std::vector<float>> newCells;
             newCells.resize(num_w_boxes, std::vector<float>(num_h_boxes, 0));
 
+            // Iterate through each cell in the grid
             for (int i = 0; i < num_w_boxes; i++) {
 
                 for (int j = 0; j < num_h_boxes; j++) {
 
+                    // Calculate the average state of near and distant neighbors
                     float nearNeighborAvg = NearNeighborsAvg(i, j);
                     float distNeighborAvg = DistantNeighborsAvg(i, j);
                     float allNeigborsAvg = (nearNeighborAvg + distNeighborAvg) / 2;
 
-                    if (cells[i][j] == 1) { // Rules for live cells
+                    // Rules for live cells
+                    if (cells[i][j] == 1) { 
 
-                        if (allNeigborsAvg <= 0.8) {
-                            
-                            newCells[i][j] = (1 + allNeigborsAvg) /2;
-                             // Stay alive under certain conditions
-                        } 
                         
+                        if (allNeigborsAvg <= 0.8) {
+
+                            // Stay alive if the average state of neighbors is below a threshold
+                            newCells[i][j] = (1 + allNeigborsAvg) / 2;
+
+                        } 
+
                         else {
 
-                            newCells[i][j] = 0; // Die under other conditions
+                            // Die if the average state of neighbors exceeds the threshold
+                            newCells[i][j] = 0;
 
                         }
+
                     } 
-                    
-                    else { // Rules for dead cells
-                       
+
+                    // Rules for dead cells
+                    else { 
+
                         if (allNeigborsAvg >= 0.275) {
 
-                            newCells[i][j] = (1 + allNeigborsAvg) /2;
-                             // Become alive under specific conditions
+                            // Become alive if the average state of neighbors is above a threshold
+                            newCells[i][j] = (1 + allNeigborsAvg) / 2;
                         } 
-                        
+
                         else {
 
-                            newCells[i][j] = 0; // Stay dead
+                            // Stay dead if the average state of neighbors is below the threshold
+                            newCells[i][j] = 0;
+
                         }
                     }
                 }
             }
 
-            cells = newCells;
+            // Return the updated grid for the next generation
+            return newCells;
+        }
+
+
+        /**
+         * @brief Updates the animation frame.
+         * 
+         * This function is called on each frame of the animation. It clears the canvas,
+         * redraws the cells based on their current state, and computes the next generation
+         * of the cellular automaton.
+         */
+        void DoFrame() {
+
+            // Clear the canvas to prepare for the next frame
+            canvas.Clear();
+
+            // Draw the current state of the cells on the canvas
+            DrawCells();
+            
+            // Compute the next generation of cells and update the grid
+            cells = NextGeneration();
 
         }
 };
 
+// Create an instance of the CAAnimator class to handle the animation
 CAAnimator animator;
 
+// The main function is currently empty because the animation is managed
+// by the CAAnimator class and the emp::web::Animate framework.
 int main() {
 
     return 0;
-
 }
