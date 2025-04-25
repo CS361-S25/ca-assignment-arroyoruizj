@@ -21,7 +21,7 @@ emp::web::Document doc{"target"};
 class CAAnimator : public emp::web::Animate {
 
     // Define constants for the size of each cell and the grid dimensions
-    const int cellSize = 15; // Size of each cell in pixels
+    const int cellSize = 5; // Size of each cell in pixels
     const int num_h_boxes = 100; // Number of cells in the grid's height
     const int num_w_boxes = 100; // Number of cells in the grid's width
     const double width{double(num_w_boxes) * cellSize}; // Total width of the canvas
@@ -101,67 +101,32 @@ class CAAnimator : public emp::web::Animate {
         }
 
         /**
-         * @brief Calculates the average state of the near neighbors of a cell.
+         * @brief Calculates the average state of the neighbors of a cell.
          * 
          * This function computes the average value of the states of the 8
          * neighboring cells in the immediate vicinity of the cell at (x, y).
          * 
          * @param x The x-coordinate of the cell.
          * @param y The y-coordinate of the cell.
-         * @return The average state of the near neighbors.
+         * @param size The radius of the neighborhood to consider for averaging.
+         * @return The average state of the neighbors.
          */
-        float NearNeighborsAvg(int x, int y) {
+        float NeighborsAvg(int x, int y, int size) {
 
             float neighborAvg = 0;
+            int gridLength = (2 * size) + 1;
+            int gridSize = (gridLength * gridLength) - 1;
         
-            // Iterate through the 3x3 neighborhood around the cell
-            for (int i = x - 1; i <= x + 1; i++) {
+            // Iterate through the neighborhood around the cell
+            for (int i = x - size; i <= x + size; i++) {
 
-                for (int j = y - 1; j <= y + 1; j++) {
-
-                    // Skip the cell itself
-                    if (i == x && j == y) {
-                    continue;
-                    }
-            
-                    // Wrap around the grid boundaries
-                    int wrapped_i = emp::Mod(i, num_w_boxes);
-                    int wrapped_j = emp::Mod(j, num_h_boxes);
-
-                    // Add the state of the neighbor to the total
-                    neighborAvg += cells[wrapped_i][wrapped_j];
-                }
-            }
-        
-            // Return the average state of the 8 neighbors
-            return neighborAvg / 8;
-        }
-
-        /**
-         * @brief Calculates the average state of the distant neighbors of a cell.
-         * 
-         * This function computes the average value of the states of the cells
-         * in a larger 7x7 neighborhood (excluding the 3x3 near neighbors) around
-         * the cell at (x, y).
-         * 
-         * @param x The x-coordinate of the cell.
-         * @param y The y-coordinate of the cell.
-         * @return The average state of the distant neighbors.
-         */
-        float DistantNeighborsAvg(int x, int y) {
-
-            float neighborAvg = 0;
-        
-            // Iterate through the 7x7 neighborhood around the cell
-            for (int i = x - 3; i <= x + 3; i++) {
-
-            for (int j = y - 3; j <= y + 3; j++) {
+            for (int j = y - size; j <= y + size; j++) {
 
                 // Skip the cell itself
                 if (i == x && j == y) {
                 continue;
                 }
-        
+            
                 // Wrap around the grid boundaries
                 int wrapped_i = emp::Mod(i, num_w_boxes);
                 int wrapped_j = emp::Mod(j, num_h_boxes);
@@ -171,8 +136,8 @@ class CAAnimator : public emp::web::Animate {
             }
             }
         
-            // Return the average state of the 48 neighbors
-            return neighborAvg / 48;
+            // Return the average state of the all neighbors
+            return neighborAvg / gridSize;
         }
 
         /**
@@ -190,15 +155,42 @@ class CAAnimator : public emp::web::Animate {
                 for (int j = 0; j < num_h_boxes; j++) {
 
                     // Draw a rectangle for each cell with a color based on its state
-                    canvas.Rect(
-                    i * cellSize, // X-coordinate of the cell
-                    j * cellSize, // Y-coordinate of the cell
-                    cellSize,     // Width of the cell
-                    cellSize,     // Height of the cell
-                    emp::ColorHSV(340.0 * cells[i][j], 1 * cells[i][j], 1 * cells[i][j]), // Fill color
-                    "black"       // Border color
-                    );
+                    canvas.Rect(i * cellSize, j * cellSize, cellSize, cellSize, emp::ColorHSV(340.0 * cells[i][j], 1 * cells[i][j], 1 * cells[i][j]), "black");
+                }
+            }
+        }
 
+        /**
+         * @brief Applies rules to determine the next state of a cell based on its current state and neighbors' average.
+         * 
+         * This function encapsulates the logic for updating a cell's state based on its current value
+         * and the average state of its neighbors.
+         * 
+         * @param currentState The current state of the cell.
+         * @param allNeighborsAvg The average state of all neighbors.
+         * @return The updated state of the cell.
+         */
+        float ApplyRules(float currentState, float allNeighborsAvg) {
+            
+            // Rules for live cells
+            if (currentState == 1) { 
+                if (allNeighborsAvg <= 0.8) {
+                    // Stay alive if the average state of neighbors is below a threshold
+                    return (1 + allNeighborsAvg) / 2;
+                } else {
+                    // Die if the average state of neighbors exceeds the threshold
+                    return 0;
+                }
+            } 
+
+            // Rules for dead cells
+            else { 
+                if (allNeighborsAvg >= 0.275) {
+                    // Become alive if the average state of neighbors is above a threshold
+                    return (1 + allNeighborsAvg) / 2;
+                } else {
+                    // Stay dead if the average state of neighbors is below the threshold
+                    return 0;
                 }
             }
         }
@@ -224,49 +216,14 @@ class CAAnimator : public emp::web::Animate {
                 for (int j = 0; j < num_h_boxes; j++) {
 
                     // Calculate the average state of near and distant neighbors
-                    float nearNeighborAvg = NearNeighborsAvg(i, j);
-                    float distNeighborAvg = DistantNeighborsAvg(i, j);
-                    float allNeigborsAvg = (nearNeighborAvg + distNeighborAvg) / 2;
+                    float nearNeighborAvg = NeighborsAvg(i, j, 1);
+                    float distNeighborAvg = NeighborsAvg(i, j, 3);
+                    float allNeighborsAvg = (nearNeighborAvg + distNeighborAvg) / 2;
 
-                    // Rules for live cells
-                    if (cells[i][j] == 1) { 
-
-                        
-                        if (allNeigborsAvg <= 0.8) {
-
-                            // Stay alive if the average state of neighbors is below a threshold
-                            newCells[i][j] = (1 + allNeigborsAvg) / 2;
-
-                        } 
-
-                        else {
-
-                            // Die if the average state of neighbors exceeds the threshold
-                            newCells[i][j] = 0;
-
-                        }
-
-                    } 
-
-                    // Rules for dead cells
-                    else { 
-
-                        if (allNeigborsAvg >= 0.275) {
-
-                            // Become alive if the average state of neighbors is above a threshold
-                            newCells[i][j] = (1 + allNeigborsAvg) / 2;
-                        } 
-
-                        else {
-
-                            // Stay dead if the average state of neighbors is below the threshold
-                            newCells[i][j] = 0;
-
-                        }
-                    }
+                    // Apply rules to determine the next state of the cell
+                    newCells[i][j] = ApplyRules(cells[i][j], allNeighborsAvg);
                 }
             }
-
             // Return the updated grid for the next generation
             return newCells;
         }
