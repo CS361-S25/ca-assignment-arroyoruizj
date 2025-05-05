@@ -26,9 +26,7 @@ class CAAnimator : public emp::web::Animate {
     const int num_w_boxes = 100; // Number of cells in the grid's width
     const double width{double(num_w_boxes) * cellSize}; // Total width of the canvas
     const double height{double(num_h_boxes) * cellSize}; // Total height of the canvas
-
-    // Define the number of initial cells to populate (1% of the grid)
-    const int startCells = int((num_h_boxes * num_w_boxes) / 100);
+    const int startCells = int((num_h_boxes * num_w_boxes) / 100); // Define the number of initial cells to populate (1% of the grid)
 
     // 2D vector to store the state of each cell in the grid
     std::vector<std::vector<float>> cells;
@@ -39,37 +37,19 @@ class CAAnimator : public emp::web::Animate {
     public:
 
     CAAnimator() {
-        // Add the canvas to the document
-        doc << canvas;
-
-        // Add toggle and step buttons to the document
-        doc << GetToggleButton("Toggle");
-        doc << GetStepButton("Step");
 
         // Initialize a random number generator with a fixed seed for reproducibility
         emp::Random random_gen(444);
 
-        // Draw the initial grid on the canvas with white cells and black borders
-        for (int x = 0; x < num_w_boxes; x++) {
-
-            for (int y = 0; y < num_h_boxes; y++) {
-                
-                canvas.Rect(x * cellSize, y * cellSize, cellSize, cellSize, "white", "black");
-            }
-        }
-
         // Resize the cells grid to match the number of boxes
         cells.resize(num_w_boxes, std::vector<float>(num_h_boxes, 0));
 
+        DocSetup();
+        DrawCells();
+
         // Populate the grid with a specified number of gliders
         for (int r = 0; r < startCells; r++) {
-
-            // Generate random coordinates for the glider
-            int randX = random_gen.GetInt(0, num_w_boxes); // Random x-coordinate
-            int randY = random_gen.GetInt(0, num_h_boxes); // Random y-coordinate
-
-            // Create a glider at the random position
-            MakeGlider(randX, randY);
+            MakeGlider(random_gen.GetInt(0, num_w_boxes), random_gen.GetInt(0, num_h_boxes));
         }
     }
 
@@ -97,6 +77,22 @@ class CAAnimator : public emp::web::Animate {
             cells[emp::Mod(x - 1, num_w_boxes)][emp::Mod(y - 1, num_h_boxes)] = 1;
             cells[emp::Mod(x - 2, num_w_boxes)][emp::Mod(y - 2, num_h_boxes)] = 1;
             cells[emp::Mod(x - 3, num_w_boxes)][emp::Mod(y - 3, num_h_boxes)] = 1;
+
+        }
+
+        /**
+         * @brief Set up for webpage
+         * 
+         * This function introduces both the start and step
+         * buttons into our webpage
+         */
+        void DocSetup() {
+            // Add the canvas to the document
+            doc << canvas;
+
+            // Add toggle and step buttons to the document
+            doc << GetToggleButton("Toggle");
+            doc << GetStepButton("Step");
 
         }
 
@@ -171,7 +167,7 @@ class CAAnimator : public emp::web::Animate {
          * @return The updated state of the cell.
          */
         float ApplyRules(float currentState, float allNeighborsAvg) {
-            
+
             // Rules for live cells
             if (currentState == 1) { 
                 if (allNeighborsAvg <= 0.8) {
